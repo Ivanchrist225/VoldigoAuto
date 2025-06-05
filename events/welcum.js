@@ -9,7 +9,7 @@ module.exports = {
     const isBotAdded = event.logMessageData.addedParticipants.some(participant => participant.userFbId === botId);
 
     if (isBotAdded) {
-      const introMessage = `Hello everyone! I'm OctobotRemake, your friendly group assistant!`;
+      const introMessage = `𝐇𝐞𝐥𝐥𝐨 𝐭𝐨𝐮𝐭 𝐥𝐞 𝐦𝐨𝐧! 𝘑𝘦 𝘴𝘶𝘪𝘴 𝘝𝘰𝘭𝘥𝘪𝘨𝘰𝘢𝘶𝘵𝘰, 𝘁𝗼𝗻 𝗮𝗺𝗶 𝗹'𝗮𝘀𝘀𝗶𝘀𝘁𝗮𝗻𝘁 𝗱𝘂 𝗴𝗿𝗼𝘂𝗽𝗲👀♦️!`;
 
       try {
         await api.sendMessage(introMessage, event.threadID);
