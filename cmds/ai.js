@@ -1,69 +1,54 @@
-const axios = require('axios');
+const axios = require("axios");
 
 const fonts = {
-
-    mathsans: {
-        a: "𝖺", b: "𝖻", c: "𝖼", d: "𝖽", e: "𝖾", f: "𝖿", g: "𝗀", h: "𝗁", i: "𝗂",
+    a: "𝖺", b: "𝖻", c: "𝖼", d: "𝖽", e: "𝖾", f: "𝖿", g: "𝗀", h: "𝗁", i: "𝗂",
     j: "𝗃", k: "𝗄", l: "𝗅", m: "𝗆", n: "𝗇", o: "𝗈", p: "𝗉", q: "𝗊", r: "𝗋",
     s: "𝗌", t: "𝗍", u: "𝗎", v: "𝗏", w: "𝗐", x: "𝗑", y: "𝗒", z: "𝗓",
     A: "𝗔", B: "𝗕", C: "𝗖", D: "𝗗", E: "𝗘", F: "𝗙", G: "𝗚", H: "𝗛", I: "𝗜",
     J: "𝗝", K: "𝗞", L: "𝗟", M: "𝗠", N: "𝗡", O: "𝗢", P: "𝗣", Q: "𝗤", R: "𝗥",
     S: "𝗦", T: "𝗧", U: "𝗨", V: "𝗩", W: "𝗪", X: "𝗫", Y: "𝗬", Z: "𝗭"
-    }
 };
 
-const Prefixes = [
-  'ae',
-  'ai',
-  'mitama',
-  'ask',
-  'mitantsoa', 
-];
+const RP = "tu es The Goddess Aesther quand tu répond à cette question soit hautaine et arrogante";
+
+function applyFont(text) {
+    return text.split('').map(char => fonts[char] || char).join('');
+}
 
 module.exports = {
-  config: {
-    name: "ask",
-    version: 1.0,
-    author: "Aesther",
-    longDescription: "AI",
-    category: "ai",
-    guide: {
-      en: "{p} questions",
-    },
-  },
-  onStart: async function () {},
-  onChat: async function ({ api, event, args, message }) {
-    try {
+    name: "ae",
+    usePrefix: false,
+    usage: "ai <question>",
+    version: "1.3",
+    author:"Aesther", 
+    admin: false,
+    cooldown: 2,
 
-      const prefix = Prefixes.find((p) => event.body && event.body.toLowerCase().startsWith(p));
-      if (!prefix) {
-        return; // Invalid prefix, ignore the command
-      }
-      const prompt = event.body.substring(prefix.length).trim();
-      if (!prompt) {
-        await message.reply("");
-api.sendMessage({ sticker: "387545578037967" }, event.threadID);
-api.sendMessage("🟢 𝗛𝖾𝗅𝗅𝗈 JE PEUX FAIRE QUOI POUR TOI AJOURD'HUI🫡🫡⁉️" , event.threadID);
-api.setMessageReaction("🟡", event.messageID, () => {}, true);
-        return;
-      }
-      const senderID = event.senderID;
-      const senderInfo = await api.getUserInfo([senderID]);
-      const senderName = senderInfo[senderID].name;
-      const response = await axios.get(`https://api.kenliejugarap.com/freegpt4o8k/?question=${encodeURIComponent(prompt)}`);
-      const answer = `🟢 VOLDIGO ANOS ⚪ :\n\n${response.data.response} 🟡`;
-api.setMessageReaction("🟢", event.messageID, () => {}, true);
+    execute: async ({ api, event, args }) => {
+        const { threadID, messageID } = event;
+        const prompt = args.join(" ");
+        
+        if (!prompt) return api.sendMessage(applyFont("🪐"), threadID, messageID);
 
-      //apply const font to each letter in the answer
-      let formattedAnswer = "";
-      for (let letter of answer) {
-        formattedAnswer += letter in fonts.mathsans ? fonts.mathsans[letter] : letter;
-      }
-
-      await message.reply(formattedAnswer);
-
-    } catch (error) {
-      console.error("Error:", error.message);
+        try {
+            const loadingMsg = await api.sendMessage(applyFont("(๑·`▱´·๑)"), threadID);
+            
+            const apiUrl = `https://api.nekorinn.my.id/ai/gemma-3-27b?text=${encodeURIComponent(RP + " : " + prompt)}`;
+            const { data } = await axios.get(apiUrl);
+            const response = data?.result || data?.description || data?.reponse || data;
+            
+            if (response) {
+                const styledResponse = applyFont(response.toString());
+                await api.unsendMessage(loadingMsg.messageID); // Supprime le message de loading
+                return api.sendMessage(`${styledResponse} 🪐`, threadID, messageID);
+            }
+            
+            await api.unsendMessage(loadingMsg.messageID); // Supprime le message de loading en cas d'erreur
+            return api.sendMessage(applyFont("⚠️ L'API n'a pas retourné de réponse valide."), threadID, messageID);
+        } catch (error) {
+            console.error("Erreur Gemini:", error);
+            if (loadingMsg) await api.unsendMessage(loadingMsg.messageID); // Supprime le message de loading si une erreur survient
+            return api.sendMessage(applyFont("❌ Erreur de connexion avec l'API Gemini."), threadID, messageID);
+        }
     }
-  }
 };
